@@ -6,6 +6,7 @@ Generate USDC payment request links for Yatori mobile payments
 import secrets
 import string
 import re
+import requests
 from typing import Optional
 from urllib.parse import urlencode, urlunparse
 
@@ -57,28 +58,86 @@ def format_amount(amount: float) -> str:
     return f"{amount:.2f}"
 
 
+def check_usdc_account_activation(address: str, network: str = "mainnet-beta") -> dict:
+    """
+    Check if a USDC token account is activated for the given address.
+    
+    Args:
+        address: Solana wallet address
+        network: Solana network (default: mainnet-beta)
+        
+    Returns:
+        Dictionary with isActivated status and other info
+    """
+    try:
+        response = requests.post(
+            "https://yumi-muddy-darkness-7179.fly.dev/is-usdc-acct-activated",
+            json={
+                "address": address,
+                "network": network
+            },
+            headers={"Content-Type": "application/json"},
+            timeout=10
+        )
+        response.raise_for_status()
+        return response.json()
+    except Exception as e:
+        # If check fails, assume not activated for safety
+        return {
+            "isActivated": False,
+            "error": str(e),
+            "status": "Check failed"
+        }
+
+
+def validate_amount_range(amount: float) -> None:
+    """
+    Validate amount is within acceptable range ($0.01 to $10,000.00).
+    
+    Args:
+        amount: Amount in USDC dollars
+        
+    Raises:
+        ValueError: If amount is outside valid range
+    """
+    MIN_AMOUNT = 0.01
+    MAX_AMOUNT = 10000.00
+    
+    if amount < MIN_AMOUNT:
+        raise ValueError(f"Amount must be at least ${MIN_AMOUNT:.2f} USDC, got ${amount}")
+    
+    if amount > MAX_AMOUNT:
+        raise ValueError(f"Amount must be under ${MAX_AMOUNT:.2f} USDC, got ${amount}")
+
+
 def create_payment_link(
     recipient: str,
     amount: float,
     yid: Optional[str] = None,
-    token: str = "usdcBasic",
-    base_url: str = "https://yatori.io/mobile/yatoriRequest"
+    token: Optional[str] = None,
+    base_url: str = "https://yatori.io/mobile/yatoriRequest",
+    network: str = "mainnet-beta"
 ) -> str:
     """
     Create a Yatori payment request link.
     
+    Automatically checks if recipient's USDC account is activated and
+    uses appropriate token type (usdcBasic or usdcCreate).
+    
     Args:
         recipient: Solana wallet address to receive payment
         amount: Amount in USDC dollars (e.g., 5.0 for $5.00)
+               Must be between $0.01 and $10,000.00
         yid: Optional unique transaction ID (auto-generated if not provided)
-        token: Token type (default: usdcBasic)
+        token: Optional token type (auto-detected if not provided)
         base_url: Base URL for Yatori requests
+        network: Solana network (default: mainnet-beta)
         
     Returns:
         Complete payment URL
         
     Raises:
-        ValueError: If recipient address is invalid or amount is negative
+        ValueError: If recipient address is invalid or amount is out of range
         
     Example:
         >>> link = create_payment_link(
@@ -92,12 +151,16 @@ def create_payment_link(
     if not validate_solana_address(recipient):
         raise ValueError(f"Invalid Solana address: {recipient}")
     
-    # Validate amount
-    if amount < 0:
-        raise ValueError(f"Amount cannot be negative: {amount}")
+    # Validate amount range ($0.01 to $10,000.00)
+    validate_amount_range(amount)
     
-    if amount == 0:
-        raise ValueError("Amount must be greater than 0")
+    # Check USDC account activation status
+    activation_check = check_usdc_account_activation(recipient, network)
+    is_activated = activation_check.get("isActivated", False)
+    
+    # Determine token type
+    if token is None:
+        token = "usdcBasic" if is_activated else "usdcCreate"
     
     # Generate yid if not provided
     if yid is None:

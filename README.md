@@ -89,7 +89,7 @@ link = create_payment_link(recipient="new_wallet", amount=10.0)
 
 ## 🔧 API Reference
 
-### `create_payment_link(recipient, amount, yid=None, token=None, network="mainnet-beta")`
+### `create_payment_link(recipient, amount, yid=None, token=None)`
 
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
@@ -97,9 +97,10 @@ link = create_payment_link(recipient="new_wallet", amount=10.0)
 | `amount` | float | ✅ | Amount in USDC ($0.01 - $10,000.00) |
 | `yid` | str | ❌ | Unique transaction ID (auto-generated if omitted) |
 | `token` | str | ❌ | Token type (auto-detected: `usdcBasic` or `usdcCreate`) |
-| `network` | str | ❌ | Solana network (default: `mainnet-beta`) |
 
 **Returns:** `str` — Complete payment URL
+
+*Note: Mainnet-beta only — no devnet support.*
 
 ---
 

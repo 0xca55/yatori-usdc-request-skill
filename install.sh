@@ -6,9 +6,7 @@ set -e
 
 SKILL_NAME="skill-yatori-usdc-request"
 SKILL_DIR="$HOME/.openclaw/skills/$SKILL_NAME"
-# Update this to your domain when ready:
-# BASE_URL="https://yatori.io/agents/yatori-usdc-request-skill"
-BASE_URL="https://raw.githubusercontent.com/0xca55/yatori-usdc-request-skill/master"
+BASE_URL="https://yatori.io/agents/yatori-usdc-request-skill"
 
 echo "📦 Installing Yatori USDC Request Skill..."
 echo ""

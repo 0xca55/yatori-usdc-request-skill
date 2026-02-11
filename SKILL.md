@@ -22,8 +22,10 @@ print(link)
 
 - ✅ **Simple API** - One function to generate links
 - ✅ **Auto-generated IDs** - Random unique yids (or provide your own)
-- ✅ **Validation** - Checks Solana addresses and amounts
-- ✅ **Flexible amounts** - Supports dollars or raw USDC amounts
+- ✅ **Address Validation** - Checks Solana addresses
+- ✅ **Amount Limits** - $0.01 minimum, $10,000.00 maximum
+- ✅ **USDC Account Detection** - Auto-detects if recipient has USDC activated
+- ✅ **Smart Token Selection** - Uses `usdcBasic` if activated, `usdcCreate` if not
 
 ## Installation
 
@@ -76,13 +78,18 @@ DEFAULT_TOKEN=usdcBasic
 
 ## API Reference
 
-### `create_payment_link(recipient, amount, yid=None, token="usdcBasic")`
+### `create_payment_link(recipient, amount, yid=None, token=None, network="mainnet-beta")`
 
 **Parameters:**
 - `recipient` (str): Solana wallet address (44 chars)
 - `amount` (float): Amount in USDC dollars (e.g., 5.0 = $5.00)
+  - **Minimum:** $0.01 USDC
+  - **Maximum:** $10,000.00 USDC
 - `yid` (str, optional): Unique transaction ID. Auto-generated if not provided
-- `token` (str, optional): Token type. Default: "usdcBasic"
+- `token` (str, optional): Token type. **Auto-detected** if not provided:
+  - `usdcBasic` - Used if recipient already has USDC account activated
+  - `usdcCreate` - Used if recipient needs USDC account created
+- `network` (str, optional): Solana network. Default: "mainnet-beta"
 
 **Returns:**
 - `str`: Complete payment URL
@@ -98,11 +105,14 @@ link = create_payment_link(
 
 ## How It Works
 
-1. **Address Validation** - Ensures recipient is valid Solana address
-2. **Amount Formatting** - Converts to proper decimal format
-3. **ID Generation** - Creates random 10-char alphanumeric yid
-4. **URL Construction** - Builds the complete payment link
-5. **Return** - Ready-to-share URL
+1. **Address Validation** - Ensures recipient is valid Solana address (32-44 chars, base58)
+2. **Amount Validation** - Validates amount is between $0.01 and $10,000.00 USDC
+3. **USDC Account Check** - Calls activation endpoint to check if recipient has USDC account
+4. **Token Selection** - Uses `usdcBasic` if activated, `usdcCreate` if account needs creation
+5. **Amount Formatting** - Converts to proper decimal format (2 decimal places)
+6. **ID Generation** - Creates random 10-char alphanumeric yid for tracking
+7. **URL Construction** - Builds the complete payment link
+8. **Return** - Ready-to-share URL
 
 ## Security Notes
 
@@ -119,11 +129,18 @@ link = create_payment_link(
 
 **Amount issues:**
 - Use decimal format (5.0 not 5)
-- Minimum amount typically $0.01
+- Minimum amount: $0.01 USDC
+- Maximum amount: $10,000.00 USDC
+- Error will specify exact issue
 
 **Link not working:**
 - Check Yatori service status
 - Verify recipient has Yatori wallet set up
+- If `usdcCreate` token used, recipient may need to accept account creation
+
+**USDC Account Activation Check Failed:**
+- Skill will default to `usdcCreate` token type
+- Link will still work but may require recipient to approve account creation
 
 ## Related
 

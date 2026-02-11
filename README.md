@@ -1,5 +1,7 @@
 # Yatori USDC Payment Link Generator
 
+![Yatori Pay OpenClaw Agent Skill](banner.jpg)
+
 [![Skill](https://img.shields.io/badge/Skill-Yatori-blue)](https://yatori.io)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
